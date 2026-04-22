@@ -7,7 +7,7 @@
 
 **[→ Live Project Showcase](https://ummuglsm0134.github.io/fraud-detection/fraud_detection_showcase.html)**
 
-**Dataset:** IEEE-CIS Fraud Detection — 590k transactions · 3.5% fraud rate · 27:1 class imbalance  
+**Dataset:** IEEE-CIS Fraud Detection  590k transactions · 3.5% fraud rate · 27:1 class imbalance  
 **Stack:** Python · XGBoost · Scikit-learn · Pandas · AWS SageMaker
 
 ---
@@ -15,11 +15,11 @@
 ## Why This Project
 
 At GVTC Communications I shipped a production customer churn classifier (AUC ~0.97+)
-adopted into VP-level retention strategy — behavioral feature engineering on transactional
+adopted into VP level retention strategy behavioral feature engineering on transactional
 data, ensemble classifiers on imbalanced targets, and business-cost-aware threshold tuning.
 
 Fraud detection is that same problem with higher stakes: missed detections cost real money,
-fraud patterns are adversarial, and real-time serving adds an infrastructure dimension.
+fraud patterns are adversarial, and real time serving adds an infrastructure dimension.
 This project covers the full stack from raw data to SageMaker endpoint.
 
 ---
