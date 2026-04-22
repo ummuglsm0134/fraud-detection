@@ -7,7 +7,7 @@
 
 **[→ Live Project Showcase](https://ummuglsm0134.github.io/fraud-detection/fraud_detection_showcase.html)**
 
-**Dataset:** IEEE-CIS Fraud Detection  590k transactions · 3.5% fraud rate · 27:1 class imbalance  
+**Dataset:** IEEE-CIS Fraud Detection  590k transactions · 3.5% fraud rate · 27:1 class imbalance 
 **Stack:** Python · XGBoost · Scikit-learn · Pandas · AWS SageMaker
 
 ---
@@ -23,6 +23,13 @@ fraud patterns are adversarial, and real time serving adds an infrastructure dim
 This project covers the full stack from raw data to SageMaker endpoint.
 
 ---
+# Data
+
+Download from Kaggle: https://www.kaggle.com/c/ieee-fraud-detection/data
+
+Place `train_transaction.csv` and `train_identity.csv` here.
+
+> Not required — notebooks generate synthetic data automatically if files are missing.
 
 ## Results
 
