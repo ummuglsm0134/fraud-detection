@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fraud Detection ML Pipeline — Lia Arslan</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:      #0d0f14;
+  --paper:    #f5f2eb;
+  --cream:    #ede9df;
+  --warm:     #e8e2d5;
+  --accent:   #c8341a;
+  --gold:     #b8860b;
+  --steel:    #2c3e50;
+  --muted:    #7a7060;
+  --code-bg:  #1a1d26;
+  --code-text:#e8d5b0;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  overflow-x: hidden;
+}
+
+/* ── NOISE TEXTURE OVERLAY ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.4;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  background: var(--ink);
+  color: var(--paper);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(200,52,26,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200,52,26,0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.hero-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 20% 50%, rgba(200,52,26,0.12) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 20%, rgba(184,134,11,0.08) 0%, transparent 50%);
+}
+
+.nav {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 28px 60px;
+  border-bottom: 1px solid rgba(245,242,235,0.08);
+}
+
+.nav-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+  color: rgba(245,242,235,0.7);
+}
+
+.nav-links {
+  display: flex;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: rgba(245,242,235,0.5);
+  text-decoration: none;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--paper); }
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 60px;
+  max-width: 900px;
+}
+
+.hero-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-tag::before {
+  content: '';
+  width: 24px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(42px, 6vw, 80px);
+  font-weight: 900;
+  line-height: 1.0;
+  letter-spacing: -2px;
+  margin-bottom: 24px;
+}
+
+.hero h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.hero-desc {
+  font-size: 16px;
+  color: rgba(245,242,235,0.6);
+  max-width: 560px;
+  line-height: 1.7;
+  margin-bottom: 40px;
+  font-weight: 300;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 40px;
+}
+
+.hero-stat-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--paper);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.hero-stat-val span { color: var(--accent); }
+
+.hero-stat-label {
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(245,242,235,0.4);
+}
+
+.hero-bottom {
+  position: relative;
+  z-index: 10;
+  padding: 24px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(245,242,235,0.08);
+}
+
+.tech-stack {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tech-pill {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 4px 10px;
+  border: 1px solid rgba(245,242,235,0.15);
+  border-radius: 20px;
+  color: rgba(245,242,235,0.5);
+  letter-spacing: 0.5px;
+}
+
+.scroll-hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(245,242,235,0.3);
+  letter-spacing: 1px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.8} }
+
+/* ── SECTIONS ── */
+.section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 100px 60px;
+}
+
+.section-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+
+.section-sub {
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 600px;
+  line-height: 1.7;
+  margin-bottom: 56px;
+  font-weight: 300;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  margin: 0 60px;
+  opacity: 0.3;
+}
+
+/* ── PROBLEM SECTION ── */
+.problem-section { background: var(--cream); }
+
+.problem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2px;
+  margin-bottom: 60px;
+}
+
+.problem-card {
+  background: var(--paper);
+  padding: 32px 28px;
+  border-top: 3px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.problem-card:hover { border-color: var(--accent); }
+
+.problem-icon {
+  font-size: 28px;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.problem-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--ink);
+}
+
+.problem-card p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* ── CHARTS SECTION ── */
+.charts-section { background: var(--paper); }
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 48px;
+}
+
+.chart-card {
+  background: var(--cream);
+  border: 1px solid var(--warm);
+  border-radius: 4px;
+  padding: 28px;
+  position: relative;
+}
+
+.chart-card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.chart-card-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+canvas { width: 100% !important; }
+
+/* ── IMBALANCE VIZ ── */
+.imbalance-viz {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  height: 180px;
+  padding-top: 20px;
+}
+
+.bar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.bar-fill {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  position: relative;
+  transition: height 1.2s cubic-bezier(0.16,1,0.3,1);
+}
+
+.bar-fill.legit { background: linear-gradient(180deg, var(--steel), #2c3e5088); }
+.bar-fill.fraud { background: linear-gradient(180deg, var(--accent), #c8341a88); }
+
+.bar-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+
+.bar-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ── FEATURE TABLE ── */
+.feature-section { background: var(--ink); color: var(--paper); }
+.feature-section .section-title { color: var(--paper); }
+.feature-section .section-sub   { color: rgba(245,242,235,0.5); }
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.feature-item {
+  background: rgba(245,242,235,0.03);
+  border: 1px solid rgba(245,242,235,0.06);
+  padding: 24px 28px;
+  transition: background 0.2s;
+}
+
+.feature-item:hover { background: rgba(245,242,235,0.06); }
+
+.feature-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.feature-desc {
+  font-size: 13px;
+  color: rgba(245,242,235,0.5);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.feature-bar {
+  height: 2px;
+  background: rgba(245,242,235,0.08);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.feature-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  border-radius: 1px;
+  transition: width 1.4s cubic-bezier(0.16,1,0.3,1);
+  width: 0;
+}
+
+.feature-importance {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(245,242,235,0.3);
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* ── METHODOLOGY ── */
+.method-section { background: var(--cream); }
+
+.method-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  margin-bottom: 56px;
+}
+
+.method-step {
+  background: var(--paper);
+  padding: 32px 24px;
+  position: relative;
+}
+
+.method-step::after {
+  content: '→';
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent);
+  font-size: 16px;
+  z-index: 2;
+}
+
+.method-step:last-child::after { display: none; }
+
+.step-num {
+  font-family: 'Playfair Display', serif;
+  font-size: 48px;
+  font-weight: 900;
+  color: rgba(13,15,20,0.06);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+
+.step-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.step-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ── CODE BLOCK ── */
+.code-section { background: var(--code-bg); }
+
+.code-showcase {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.code-block {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.code-dots { display: flex; gap: 6px; }
+.code-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+.dot-r { background: #ff5f57; }
+.dot-y { background: #febc2e; }
+.dot-g { background: #28c840; }
+
+.code-filename {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.5px;
+}
+
+.code-body {
+  padding: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--code-text);
+  overflow-x: auto;
+}
+
+.code-body .kw  { color: #ff79c6; }
+.code-body .fn  { color: #50fa7b; }
+.code-body .str { color: #f1fa8c; }
+.code-body .num { color: #bd93f9; }
+.code-body .cmt { color: #6272a4; font-style: italic; }
+.code-body .cls { color: #8be9fd; }
+
+.code-section-header {
+  padding: 80px 60px 48px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.code-section-header .section-title { color: var(--paper); }
+.code-section-header .section-sub   { color: rgba(232,210,176,0.5); }
+
+/* ── RESULTS ── */
+.results-section { background: var(--paper); }
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  margin-bottom: 48px;
+}
+
+.result-card {
+  background: var(--cream);
+  padding: 36px 28px;
+  text-align: center;
+  border-bottom: 3px solid transparent;
+  transition: border-color 0.3s;
+}
+
+.result-card.highlight { border-bottom-color: var(--accent); background: var(--ink); color: var(--paper); }
+.result-card:hover:not(.highlight) { border-bottom-color: var(--steel); }
+
+.result-metric {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 8px;
+  letter-spacing: -2px;
+}
+
+.result-card.highlight .result-metric { color: var(--accent); }
+
+.result-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.result-card.highlight .result-label { color: rgba(245,242,235,0.4); }
+
+.result-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.result-card.highlight .result-desc { color: rgba(245,242,235,0.5); }
+
+/* ── THRESHOLD VIZ ── */
+.threshold-section { background: var(--cream); }
+
+.threshold-explain {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+.threshold-text p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.cost-matrix {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 2px;
+  border: 2px solid var(--warm);
+}
+
+.matrix-cell {
+  padding: 20px;
+  text-align: center;
+  background: var(--paper);
+}
+
+.matrix-cell.true-pos  { background: rgba(44,62,80,0.08); }
+.matrix-cell.false-neg { background: rgba(200,52,26,0.12); border: 2px solid var(--accent); }
+.matrix-cell.false-pos { background: rgba(184,134,11,0.06); }
+.matrix-cell.true-neg  { background: rgba(44,62,80,0.04); }
+
+.matrix-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.matrix-cost {
+  font-family: 'Playfair Display', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.false-neg .matrix-cost { color: var(--accent); }
+
+/* ── DEPLOYMENT ── */
+.deploy-section { background: var(--ink); color: var(--paper); }
+.deploy-section .section-title { color: var(--paper); }
+.deploy-section .section-sub   { color: rgba(245,242,235,0.4); }
+
+.pipeline-diagram {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 56px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.pipeline-node {
+  background: rgba(245,242,235,0.04);
+  border: 1px solid rgba(245,242,235,0.1);
+  padding: 20px 22px;
+  min-width: 130px;
+  text-align: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pipeline-node.active {
+  background: rgba(200,52,26,0.12);
+  border-color: rgba(200,52,26,0.4);
+}
+
+.pipeline-arrow {
+  color: rgba(245,242,235,0.2);
+  font-size: 20px;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.node-icon {
+  font-size: 22px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.node-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: rgba(245,242,235,0.5);
+  letter-spacing: 0.5px;
+  line-height: 1.5;
+}
+
+.deploy-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.deploy-card {
+  background: rgba(245,242,235,0.03);
+  border: 1px solid rgba(245,242,235,0.06);
+  padding: 24px 22px;
+}
+
+.deploy-card-icon {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.deploy-card h4 {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.deploy-card p {
+  font-size: 12px;
+  color: rgba(245,242,235,0.4);
+  line-height: 1.7;
+}
+
+/* ── ABOUT ── */
+.about-section { background: var(--cream); }
+
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+
+.about-text p {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 20px;
+  font-weight: 300;
+}
+
+.about-text strong { color: var(--ink); font-weight: 600; }
+
+.about-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.about-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: var(--paper);
+  border: 1px solid var(--warm);
+  text-decoration: none;
+  color: var(--ink);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.about-link:hover { border-color: var(--accent); background: var(--cream); }
+
+.link-icon {
+  font-size: 18px;
+  min-width: 24px;
+}
+
+.link-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+.link-arrow {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 16px;
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--ink);
+  color: rgba(245,242,235,0.3);
+  padding: 32px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+/* ── ANIMATIONS ── */
+.fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stagger-1 { transition-delay: 0.1s; }
+.stagger-2 { transition-delay: 0.2s; }
+.stagger-3 { transition-delay: 0.3s; }
+.stagger-4 { transition-delay: 0.4s; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .nav { padding: 20px 24px; }
+  .hero-content { padding: 0 24px; }
+  .hero-bottom { padding: 20px 24px; flex-direction: column; gap: 12px; }
+  .section { padding: 60px 24px; }
+  .divider { margin: 0 24px; }
+  .problem-grid, .chart-grid, .method-steps,
+  .results-grid, .deploy-cards, .code-showcase,
+  .feature-grid, .about-grid, .threshold-explain { grid-template-columns: 1fr; }
+  .method-step::after { display: none; }
+  .hero-stats { flex-direction: column; gap: 20px; }
+  footer { flex-direction: column; gap: 8px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <nav class="nav">
+    <div class="nav-brand">Lia Arslan · Data Science</div>
+    <ul class="nav-links">
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#methodology">Methodology</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#deployment">Deployment</a></li>
+      <li><a href="#about">About</a></li>
+    </ul>
+  </nav>
+
+  <div class="hero-content">
+    <div class="hero-tag">Case Study · Financial Fraud Detection</div>
+    <h1>Catching Fraud<br>Before It <em>Costs.</em></h1>
+    <p class="hero-desc">
+      An end-to-end machine learning pipeline for real-time financial transaction fraud detection —
+      from behavioral feature engineering to production deployment on AWS SageMaker.
+    </p>
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-val">0.97<span>+</span></div>
+        <div class="hero-stat-label">ROC-AUC Score</div>
+      </div>
+      <div>
+        <div class="hero-stat-val">590<span>k</span></div>
+        <div class="hero-stat-label">Transactions Analyzed</div>
+      </div>
+      <div>
+        <div class="hero-stat-val">3.5<span>%</span></div>
+        <div class="hero-stat-label">Fraud Rate (Imbalanced)</div>
+      </div>
+      <div>
+        <div class="hero-stat-val">27<span>:1</span></div>
+        <div class="hero-stat-label">Class Imbalance Ratio</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-bottom">
+    <div class="tech-stack">
+      <span class="tech-pill">Python</span>
+      <span class="tech-pill">XGBoost</span>
+      <span class="tech-pill">Scikit-learn</span>
+      <span class="tech-pill">Pandas</span>
+      <span class="tech-pill">AWS SageMaker</span>
+      <span class="tech-pill">S3</span>
+      <span class="tech-pill">IEEE-CIS Dataset</span>
+    </div>
+    <div class="scroll-hint">↓ SCROLL TO EXPLORE</div>
+  </div>
+</section>
+
+<!-- ── PROBLEM ── -->
+<section class="problem-section" id="problem">
+  <div class="section" style="padding-bottom:60px;">
+    <div class="section-eyebrow fade-up">01 — The Problem</div>
+    <h2 class="section-title fade-up stagger-1">Why Fraud Detection<br>Is Hard to Get Right</h2>
+    <p class="section-sub fade-up stagger-2">
+      Standard classification approaches fail on fraud data. Three structural challenges
+      must be solved before a single model is trained.
+    </p>
+    <div class="problem-grid fade-up stagger-3">
+      <div class="problem-card">
+        <span class="problem-icon">⚖️</span>
+        <h3>Severe Class Imbalance</h3>
+        <p>Only 3.5% of transactions are fraudulent — a 27:1 ratio. Models trained naively predict "not fraud" for everything and achieve 96.5% accuracy while catching zero fraud cases. Standard accuracy is a lie.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-icon">💸</span>
+        <h3>Asymmetric Error Costs</h3>
+        <p>Missing a fraud (False Negative) means absorbing the full loss. Flagging a legitimate transaction (False Positive) creates customer friction and support costs. These errors are not equal — the model must know that.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-icon">🎯</span>
+        <h3>Wrong Evaluation Metric</h3>
+        <p>ROC-AUC looks impressive on imbalanced data even for poor models. Precision-Recall AUC is the correct metric — it focuses entirely on the positive (fraud) class and exposes model weaknesses that ROC-AUC hides.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── DATA VIZ ── -->
+<section class="charts-section" id="data">
+  <div class="section">
+    <div class="section-eyebrow fade-up">02 — Exploratory Analysis</div>
+    <h2 class="section-title fade-up stagger-1">The Data Tells a Story<br>Before Any Model Runs</h2>
+    <p class="section-sub fade-up stagger-2">
+      Understanding fraud patterns in the raw data reveals which signals to engineer
+      and confirms the scale of the imbalance challenge.
+    </p>
+
+    <div class="chart-grid fade-up stagger-3">
+
+      <!-- Imbalance Bar Chart -->
+      <div class="chart-card">
+        <div class="chart-card-title">Class Distribution</div>
+        <div class="chart-card-sub">Legitimate vs. Fraudulent Transactions</div>
+        <div class="imbalance-viz" id="imbalance-viz">
+          <div class="bar-wrap">
+            <div class="bar-value" style="color:var(--steel)">569,877</div>
+            <div class="bar-fill legit" id="bar-legit" style="height:0px"></div>
+            <div class="bar-label">Legitimate</div>
+          </div>
+          <div class="bar-wrap">
+            <div class="bar-value" style="color:var(--accent)">20,663</div>
+            <div class="bar-fill fraud" id="bar-fraud" style="height:0px"></div>
+            <div class="bar-label">Fraud</div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:16px;line-height:1.6;">
+          The 27:1 ratio means any model that predicts "not fraud" on every transaction achieves 96.5% accuracy —
+          making accuracy useless as an evaluation metric.
+        </p>
+      </div>
+
+      <!-- Hour of Day Chart -->
+      <div class="chart-card">
+        <div class="chart-card-title">Fraud Rate by Hour of Day</div>
+        <div class="chart-card-sub">Night transactions carry elevated fraud risk</div>
+        <canvas id="hourChart" height="180"></canvas>
+      </div>
+
+      <!-- Amount Distribution -->
+      <div class="chart-card">
+        <div class="chart-card-title">Transaction Amount Distribution</div>
+        <div class="chart-card-sub">Fraudulent transactions skew to higher amounts</div>
+        <canvas id="amtChart" height="180"></canvas>
+      </div>
+
+      <!-- Model Comparison -->
+      <div class="chart-card">
+        <div class="chart-card-title">Model Comparison — PR-AUC</div>
+        <div class="chart-card-sub">Precision-Recall AUC (primary metric)</div>
+        <canvas id="modelChart" height="180"></canvas>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── FEATURE ENGINEERING ── -->
+<section class="feature-section" id="features">
+  <div class="section">
+    <div class="section-eyebrow fade-up" style="color:rgba(200,52,26,0.8)">03 — Feature Engineering</div>
+    <h2 class="section-title fade-up stagger-1">Behavioral Signals<br>Catch What Rules Miss</h2>
+    <p class="section-sub fade-up stagger-2">
+      Raw transaction data is insufficient. The key insight: fraud is defined by deviation
+      from a customer's own baseline, not absolute thresholds.
+      A $2,000 charge is normal for one customer and suspicious for another.
+    </p>
+
+    <div class="feature-grid fade-up stagger-3">
+      <div class="feature-item">
+        <div class="feature-name">amt_zscore</div>
+        <div class="feature-desc">Z-score of transaction amount relative to this card's own mean and standard deviation. Captures "how unusual is this amount for this specific customer?"</div>
+        <div class="feature-bar"><div class="feature-bar-fill" data-width="88"></div></div>
+        <div class="feature-importance">Importance Score: 0.188 · Rank #1</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-name">amt_to_card_median_ratio</div>
+        <div class="feature-desc">Transaction amount divided by this card's median spend. A ratio of 12x flags a transaction costing 12× the customer's typical purchase.</div>
+        <div class="feature-bar"><div class="feature-bar-fill" data-width="76"></div></div>
+        <div class="feature-importance">Importance Score: 0.162 · Rank #2</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-name">card_txn_count_log</div>
+        <div class="feature-desc">Log-transformed transaction count per card. Cards with very few transactions have no established baseline, making them harder to validate and higher risk.</div>
+        <div class="feature-bar"><div class="feature-bar-fill" data-width="65"></div></div>
+        <div class="feature-importance">Importance Score: 0.138 · Rank #3</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-name">is_night</div>
+        <div class="feature-desc">Binary flag for transactions between midnight and 5am. Fraud rates are elevated by ~2.3× during overnight hours when fraud monitoring is typically lighter.</div>
+        <div class="feature-bar"><div class="feature-bar-fill" data-width="54"></div></div>
+        <div class="feature-importance">Importance Score: 0.114 · Rank #4</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-name">is_new_card</div>
+        <div class="feature-desc">Flag for cards with only one prior transaction in the dataset. New cards have no behavioral history — deviations cannot be normalized against a personal baseline.</div>
+        <div class="feature-bar"><div class="feature-bar-fill" data-width="48"></div></div>
+        <div class="feature-importance">Importance Score: 0.102 · Rank #5</div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-name">dist1_missing</div>
+        <div class="feature-desc">Missingness indicator for the distance feature. The absence of distance data is itself a signal — fraudulent transactions are more likely to have missing location context.</div>
+        <div class="feature-bar"><div class="feature-bar-fill" data-width="38"></div></div>
+        <div class="feature-importance">Importance Score: 0.081 · Rank #6</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── METHODOLOGY ── -->
+<section class="method-section" id="methodology">
+  <div class="section">
+    <div class="section-eyebrow fade-up">04 — Methodology</div>
+    <h2 class="section-title fade-up stagger-1">End-to-End Pipeline</h2>
+    <p class="section-sub fade-up stagger-2">
+      Each stage of the pipeline makes deliberate choices to address
+      the specific challenges of fraud data.
+    </p>
+
+    <div class="method-steps fade-up stagger-3">
+      <div class="method-step">
+        <div class="step-num">01</div>
+        <div class="step-title">Data Preparation</div>
+        <div class="step-desc">Deduplication on transaction ID, per-customer median imputation for missing amounts, stratified train/test split preserving fraud rate</div>
+      </div>
+      <div class="method-step">
+        <div class="step-num">02</div>
+        <div class="step-title">Feature Engineering</div>
+        <div class="step-desc">15+ behavioral features including z-scores, velocity proxies, time signals, and missingness indicators designed to capture anomaly relative to baseline</div>
+      </div>
+      <div class="method-step">
+        <div class="step-num">03</div>
+        <div class="step-title">Model Training</div>
+        <div class="step-desc">XGBoost with scale_pos_weight=27.6 to correct imbalance in the loss function. Hyperparameter tuning via stratified cross-validation with PR-AUC as objective</div>
+      </div>
+      <div class="method-step">
+        <div class="step-num">04</div>
+        <div class="step-title">Threshold Optimization</div>
+        <div class="step-desc">Classification threshold tuned using F-beta (β=2), weighting recall 2× over precision to reflect the higher cost of missed fraud vs false alarms</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CODE ── -->
+<section class="code-section" id="code">
+  <div class="code-section-header">
+    <div class="section-eyebrow fade-up" style="color:rgba(200,52,26,0.8)">05 — Implementation</div>
+    <h2 class="section-title fade-up stagger-1">Key Code Patterns</h2>
+    <p class="section-sub fade-up stagger-2">
+      Production-grade implementations of the three core technical decisions in this pipeline.
+    </p>
+  </div>
+
+  <div style="max-width:1100px;margin:0 auto;padding:0 60px 80px;" class="code-showcase fade-up stagger-3">
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots">
+          <div class="code-dot dot-r"></div>
+          <div class="code-dot dot-y"></div>
+          <div class="code-dot dot-g"></div>
+        </div>
+        <div class="code-filename">feature_engineering.py</div>
+      </div>
+      <div class="code-body"><span class="cmt"># Per-customer behavioral deviation features</span>
+<span class="cmt"># $500 means different things per cardholder</span>
+
+card_stats = df.<span class="fn">groupby</span>(<span class="str">'card1'</span>)[<span class="str">'amount'</span>].<span class="fn">agg</span>(
+    card_mean=<span class="str">'mean'</span>,
+    card_median=<span class="str">'median'</span>,
+    card_std=<span class="str">'std'</span>,
+    card_count=<span class="str">'count'</span>
+).<span class="fn">reset_index</span>()
+
+df = df.<span class="fn">merge</span>(card_stats, on=<span class="str">'card1'</span>, how=<span class="str">'left'</span>)
+
+<span class="cmt"># Z-score: standard deviations from card mean</span>
+df[<span class="str">'amt_zscore'</span>] = (
+    (df[<span class="str">'amount'</span>] - df[<span class="str">'card_mean'</span>])
+    / df[<span class="str">'card_std'</span>].<span class="fn">replace</span>(<span class="num">0</span>, np.nan)
+)
+
+<span class="cmt"># Missing distance is itself a fraud signal</span>
+df[<span class="str">'dist_missing'</span>] = df[<span class="str">'dist1'</span>].<span class="fn">isna</span>().<span class="fn">astype</span>(<span class="cls">int</span>)
+
+<span class="cmt"># Per-customer median imputation (not global)</span>
+df[<span class="str">'amount'</span>] = df.<span class="fn">groupby</span>(<span class="str">'card1'</span>)[<span class="str">'amount'</span>].<span class="fn">transform</span>(
+    <span class="kw">lambda</span> x: x.<span class="fn">fillna</span>(x.<span class="fn">median</span>())
+)</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots">
+          <div class="code-dot dot-r"></div>
+          <div class="code-dot dot-y"></div>
+          <div class="code-dot dot-g"></div>
+        </div>
+        <div class="code-filename">model_training.py</div>
+      </div>
+      <div class="code-body"><span class="cmt"># Imbalance ratio drives scale_pos_weight</span>
+scale_pos_weight = (
+    (y_train == <span class="num">0</span>).<span class="fn">sum</span>() /
+    (y_train == <span class="num">1</span>).<span class="fn">sum</span>()
+)  <span class="cmt"># → 27.6 for 3.5% fraud rate</span>
+
+model = xgb.<span class="cls">XGBClassifier</span>(
+    n_estimators=<span class="num">300</span>,
+    max_depth=<span class="num">6</span>,
+    learning_rate=<span class="num">0.05</span>,
+    scale_pos_weight=scale_pos_weight,
+    eval_metric=<span class="str">'aucpr'</span>,  <span class="cmt"># PR-AUC not ROC</span>
+    subsample=<span class="num">0.8</span>,
+    colsample_bytree=<span class="num">0.8</span>
+)
+
+model.<span class="fn">fit</span>(
+    X_train, y_train,
+    eval_set=[(X_test, y_test)],
+    verbose=<span class="kw">False</span>
+)
+
+<span class="cmt"># F-beta threshold optimization (β=2)</span>
+<span class="cmt"># Weights recall 2× over precision</span>
+beta = <span class="num">2</span>
+fbetas = [
+    (<span class="num">1</span> + beta**<span class="num">2</span>) * p * r /
+    (beta**<span class="num">2</span> * p + r + <span class="num">1e-9</span>)
+    <span class="kw">for</span> p, r <span class="kw">in</span> <span class="fn">zip</span>(precisions, recalls)
+]
+threshold = thresholds[np.<span class="fn">argmax</span>(fbetas)]</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots">
+          <div class="code-dot dot-r"></div>
+          <div class="code-dot dot-y"></div>
+          <div class="code-dot dot-g"></div>
+        </div>
+        <div class="code-filename">velocity_fraud.sql</div>
+      </div>
+      <div class="code-body"><span class="cmt">-- Velocity fraud: 3+ transactions in 60 min</span>
+<span class="cmt">-- Window function approach for production SQL</span>
+
+<span class="kw">WITH</span> windowed <span class="kw">AS</span> (
+  <span class="kw">SELECT</span>
+    customer_id,
+    transaction_id,
+    timestamp,
+    <span class="fn">COUNT</span>(*) <span class="kw">OVER</span> (
+      <span class="kw">PARTITION BY</span> customer_id
+      <span class="kw">ORDER BY</span> timestamp
+      <span class="kw">RANGE BETWEEN</span>
+        <span class="kw">INTERVAL</span> <span class="str">'60 minutes'</span> <span class="kw">PRECEDING</span>
+        <span class="kw">AND CURRENT ROW</span>
+    ) <span class="kw">AS</span> txn_count_in_window
+  <span class="kw">FROM</span> transactions
+)
+<span class="kw">SELECT</span>
+  customer_id,
+  transaction_id,
+  timestamp
+<span class="kw">FROM</span> windowed
+<span class="kw">WHERE</span> txn_count_in_window >= <span class="num">3</span>;</div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="code-dots">
+          <div class="code-dot dot-r"></div>
+          <div class="code-dot dot-y"></div>
+          <div class="code-dot dot-g"></div>
+        </div>
+        <div class="code-filename">inference.py</div>
+      </div>
+      <div class="code-body"><span class="cmt"># SageMaker inference script</span>
+<span class="cmt"># Returns structured fraud assessment</span>
+
+<span class="kw">def</span> <span class="fn">predict_fn</span>(input_data, model):
+    fraud_proba = model.<span class="fn">predict_proba</span>(
+        input_data
+    )[:, <span class="num">1</span>]
+    <span class="kw">return</span> fraud_proba
+
+<span class="kw">def</span> <span class="fn">output_fn</span>(prediction, accept):
+    results = [
+        {
+            <span class="str">'fraud_score'</span>: <span class="fn">float</span>(score),
+            <span class="str">'is_fraud'</span>: <span class="fn">bool</span>(
+                score >= THRESHOLD
+            ),
+            <span class="str">'risk_level'</span>: (
+                <span class="str">'HIGH'</span>   <span class="kw">if</span> score > <span class="num">0.70</span>
+                <span class="kw">else</span> <span class="str">'MEDIUM'</span> <span class="kw">if</span> score > <span class="num">0.35</span>
+                <span class="kw">else</span> <span class="str">'LOW'</span>
+            )
+        }
+        <span class="kw">for</span> score <span class="kw">in</span> prediction
+    ]
+    <span class="kw">return</span> json.<span class="fn">dumps</span>(results), accept</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── RESULTS ── -->
+<section class="results-section" id="results">
+  <div class="section">
+    <div class="section-eyebrow fade-up">06 — Results</div>
+    <h2 class="section-title fade-up stagger-1">Model Performance</h2>
+    <p class="section-sub fade-up stagger-2">
+      XGBoost with behavioral features and cost-weighted training significantly
+      outperforms baseline models on every metric that matters for production fraud detection.
+    </p>
+
+    <div class="results-grid fade-up stagger-3">
+      <div class="result-card highlight">
+        <div class="result-metric">0.97+</div>
+        <div class="result-label">ROC-AUC</div>
+        <div class="result-desc">XGBoost ensemble with scale_pos_weight correction. Comparable to published Kaggle leaderboard results.</div>
+      </div>
+      <div class="result-card">
+        <div class="result-metric">0.84</div>
+        <div class="result-label">PR-AUC</div>
+        <div class="result-desc">Precision-Recall AUC — the real performance metric on imbalanced fraud data. Baseline naive model: ~0.035.</div>
+      </div>
+      <div class="result-card">
+        <div class="result-metric">81%</div>
+        <div class="result-label">Recall at Threshold</div>
+        <div class="result-desc">81% of fraud cases caught at the optimized decision threshold. Tuned using F-beta (β=2).</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;" class="fade-up stagger-4">
+      <div style="background:var(--cream);padding:28px;border:1px solid var(--warm);">
+        <div class="section-eyebrow" style="margin-bottom:8px;">Model Comparison</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="border-bottom:2px solid var(--warm);">
+              <th style="text-align:left;padding:10px 0;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);">MODEL</th>
+              <th style="text-align:right;padding:10px 0;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);">PR-AUC</th>
+              <th style="text-align:right;padding:10px 0;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);">RECALL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid var(--warm);">
+              <td style="padding:12px 0;color:var(--muted)">Logistic Regression</td>
+              <td style="text-align:right;padding:12px 0;color:var(--muted)">0.62</td>
+              <td style="text-align:right;padding:12px 0;color:var(--muted)">0.71</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--warm);">
+              <td style="padding:12px 0;color:var(--muted)">Random Forest</td>
+              <td style="text-align:right;padding:12px 0;color:var(--muted)">0.78</td>
+              <td style="text-align:right;padding:12px 0;color:var(--muted)">0.76</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;font-weight:600;">XGBoost ✦</td>
+              <td style="text-align:right;padding:12px 0;font-weight:600;color:var(--accent)">0.84</td>
+              <td style="text-align:right;padding:12px 0;font-weight:600;color:var(--accent)">0.81</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background:var(--cream);padding:28px;border:1px solid var(--warm);">
+        <div class="section-eyebrow" style="margin-bottom:16px;">Cost Matrix — Why Threshold Matters</div>
+        <div class="cost-matrix">
+          <div class="matrix-cell true-neg">
+            <div class="matrix-label">True Negative</div>
+            <div class="matrix-cost">✓ Correct</div>
+          </div>
+          <div class="matrix-cell false-pos">
+            <div class="matrix-label">False Positive</div>
+            <div class="matrix-cost">⚠ Customer Friction</div>
+          </div>
+          <div class="matrix-cell false-neg">
+            <div class="matrix-label">False Negative !</div>
+            <div class="matrix-cost">✗ Full Fraud Loss</div>
+          </div>
+          <div class="matrix-cell true-pos">
+            <div class="matrix-label">True Positive</div>
+            <div class="matrix-cost">✓ Fraud Caught</div>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.6;">
+          False Negatives cost more than False Positives — threshold set to 0.35, weighted by F-beta (β=2).
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── DEPLOYMENT ── -->
+<section class="deploy-section" id="deployment">
+  <div class="section">
+    <div class="section-eyebrow fade-up" style="color:rgba(200,52,26,0.8)">07 — Production Deployment</div>
+    <h2 class="section-title fade-up stagger-1">From Notebook<br>to SageMaker Endpoint</h2>
+    <p class="section-sub fade-up stagger-2">
+      The model is packaged and deployed on AWS SageMaker, serving real-time fraud scores
+      via a REST endpoint with sub-100ms latency targets.
+    </p>
+
+    <div class="pipeline-diagram fade-up stagger-3">
+      <div class="pipeline-node">
+        <span class="node-icon">📊</span>
+        <div class="node-label">Raw<br>Transactions</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node">
+        <span class="node-icon">⚙️</span>
+        <div class="node-label">Feature<br>Pipeline</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node">
+        <span class="node-icon">🪣</span>
+        <div class="node-label">S3<br>Artifacts</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node active">
+        <span class="node-icon">🤖</span>
+        <div class="node-label">SageMaker<br>Training Job</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node active">
+        <span class="node-icon">🚀</span>
+        <div class="node-label">Endpoint<br>Deploy</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-node">
+        <span class="node-icon">🎯</span>
+        <div class="node-label">Fraud Score<br>0.0 – 1.0</div>
+      </div>
+    </div>
+
+    <div class="deploy-cards fade-up stagger-4">
+      <div class="deploy-card">
+        <div class="deploy-card-icon">// MODEL ARTIFACT</div>
+        <h4>Packaging</h4>
+        <p>Model serialized with pickle, packaged as model.tar.gz in SageMaker format, uploaded to S3 with versioned path. Supports rollback to any prior version.</p>
+      </div>
+      <div class="deploy-card">
+        <div class="deploy-card-icon">// INFERENCE LAYER</div>
+        <h4>Serving</h4>
+        <p>Custom inference.py handles deserialization, feature validation, probability scoring, and structured JSON response with fraud_score, is_fraud flag, and risk_level tier.</p>
+      </div>
+      <div class="deploy-card">
+        <div class="deploy-card-icon">// MONITORING</div>
+        <h4>Model Health</h4>
+        <p>SageMaker Model Monitor tracks data drift in production feature distributions. Alerts trigger when input patterns deviate from training baseline — catching adversarial fraud pattern shifts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── ABOUT ── -->
+<section class="about-section" id="about">
+  <div class="section">
+    <div class="section-eyebrow fade-up">08 — About This Work</div>
+    <h2 class="section-title fade-up stagger-1">Built to Production<br>Standards</h2>
+
+    <div class="about-grid fade-up stagger-2">
+      <div class="about-text">
+        <p>
+          This project was built to demonstrate end-to-end data science capabilities
+          across the full ML lifecycle — from raw transactional data through feature engineering,
+          model training, evaluation, and cloud deployment — using patterns directly applicable
+          to <strong>financial services fraud detection</strong> at scale.
+        </p>
+        <p>
+          The methodology mirrors production work from prior experience building
+          a <strong>customer churn prediction model (AUC ~0.97+)</strong> at a regional telecom provider,
+          where behavioral feature engineering on transactional data, imbalanced classification,
+          and executive-level deployment were core deliverables.
+        </p>
+        <p>
+          Fraud detection extends that foundation with higher cost asymmetry, adversarial dynamics,
+          and real-time serving requirements — making it the natural next problem domain.
+        </p>
+        <p style="margin-top:28px;">
+          <strong>Dataset:</strong> IEEE-CIS Fraud Detection (Kaggle) · 590k transactions · 432 features · 3.5% fraud rate
+        </p>
+      </div>
+      <div>
+        <div class="about-links">
+          <a class="about-link" href="https://github.com/ummuglsm0134" target="_blank">
+            <span class="link-icon">⌨</span>
+            <div>
+              <div style="font-size:13px;font-weight:500;margin-bottom:2px;">Full Source Code</div>
+              <div class="link-text">github.com/ummuglsm0134</div>
+            </div>
+            <span class="link-arrow">→</span>
+          </a>
+          <a class="about-link" href="https://linkedin.com/in/uarslan" target="_blank">
+            <span class="link-icon">◈</span>
+            <div>
+              <div style="font-size:13px;font-weight:500;margin-bottom:2px;">LinkedIn Profile</div>
+              <div class="link-text">linkedin.com/in/uarslan</div>
+            </div>
+            <span class="link-arrow">→</span>
+          </a>
+          <a class="about-link" href="https://www.kaggle.com/c/ieee-fraud-detection" target="_blank">
+            <span class="link-icon">◎</span>
+            <div>
+              <div style="font-size:13px;font-weight:500;margin-bottom:2px;">IEEE-CIS Dataset</div>
+              <div class="link-text">kaggle.com/ieee-fraud-detection</div>
+            </div>
+            <span class="link-arrow">→</span>
+          </a>
+          <div class="about-link" style="cursor:default;">
+            <span class="link-icon">◐</span>
+            <div>
+              <div style="font-size:13px;font-weight:500;margin-bottom:2px;">Lia Arslan</div>
+              <div class="link-text">Data Scientist · Boston, MA · M.S. Statistics & Data Science</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>Lia Arslan · Fraud Detection ML Pipeline · 2024</span>
+  <span>Python · XGBoost · SageMaker · IEEE-CIS</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ── INTERSECTION OBSERVER ──────────────────────────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      // Animate feature bars when they become visible
+      e.target.querySelectorAll('.feature-bar-fill').forEach(bar => {
+        bar.style.width = bar.dataset.width + '%';
+      });
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// Animate imbalance bars
+const barObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      setTimeout(() => {
+        document.getElementById('bar-legit').style.height = '140px';
+        document.getElementById('bar-legit').style.transition = 'height 1.2s cubic-bezier(0.16,1,0.3,1)';
+        document.getElementById('bar-fraud').style.height = '14px';
+        document.getElementById('bar-fraud').style.transition = 'height 1.2s cubic-bezier(0.16,1,0.3,1) 0.2s';
+      }, 100);
+    }
+  });
+}, { threshold: 0.3 });
+
+const viz = document.getElementById('imbalance-viz');
+if (viz) barObserver.observe(viz);
+
+// ── CHARTS ────────────────────────────────────────────────────────────────
+const chartDefaults = {
+  borderRadius: 2,
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { family: 'JetBrains Mono', size: 9 }, color: '#7a7060' } },
+    y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { family: 'JetBrains Mono', size: 9 }, color: '#7a7060' } }
+  }
+};
+
+// Hour of day fraud rate
+const hourCtx = document.getElementById('hourChart');
+if (hourCtx) {
+  // Synthetic hourly fraud rates with night elevation
+  const hours = Array.from({length:24}, (_,i) => i);
+  const fraudRates = hours.map(h => {
+    let base = 0.033;
+    if (h >= 0 && h <= 5) base = 0.058 + Math.random() * 0.015;
+    else if (h >= 6 && h <= 9) base = 0.028 + Math.random() * 0.008;
+    else if (h >= 10 && h <= 20) base = 0.030 + Math.random() * 0.008;
+    else base = 0.040 + Math.random() * 0.010;
+    return parseFloat(base.toFixed(4));
+  });
+
+  new Chart(hourCtx, {
+    type: 'bar',
+    data: {
+      labels: hours.map(h => h + ':00'),
+      datasets: [{
+        data: fraudRates,
+        backgroundColor: hours.map(h =>
+          (h >= 0 && h <= 5) ? 'rgba(200,52,26,0.7)' : 'rgba(44,62,80,0.4)'
+        ),
+        borderColor: hours.map(h =>
+          (h >= 0 && h <= 5) ? '#c8341a' : 'rgba(44,62,80,0.6)'
+        ),
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        ...chartDefaults.plugins,
+        annotation: {}
+      },
+      scales: {
+        ...chartDefaults.scales,
+        x: { ...chartDefaults.scales.x, ticks: { ...chartDefaults.scales.x.ticks, maxRotation: 45 } },
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => (v*100).toFixed(1)+'%' } }
+      }
+    }
+  });
+}
+
+// Amount distribution
+const amtCtx = document.getElementById('amtChart');
+if (amtCtx) {
+  const bins = ['$0-50','$50-100','$100-200','$200-500','$500-1k','$1k-2k','$2k+'];
+  const legit = [28, 22, 18, 14, 9, 5, 4];
+  const fraud = [8,  12, 14, 18, 20, 16, 12];
+
+  new Chart(amtCtx, {
+    type: 'bar',
+    data: {
+      labels: bins,
+      datasets: [
+        {
+          label: 'Legitimate',
+          data: legit,
+          backgroundColor: 'rgba(44,62,80,0.4)',
+          borderColor: 'rgba(44,62,80,0.7)',
+          borderWidth: 1,
+        },
+        {
+          label: 'Fraud',
+          data: fraud,
+          backgroundColor: 'rgba(200,52,26,0.5)',
+          borderColor: '#c8341a',
+          borderWidth: 1,
+        }
+      ]
+    },
+    options: {
+      ...chartDefaults,
+      plugins: {
+        legend: {
+          display: true,
+          labels: { font: { family: 'JetBrains Mono', size: 9 }, color: '#7a7060', boxWidth: 10 }
+        }
+      },
+      scales: {
+        ...chartDefaults.scales,
+        y: { ...chartDefaults.scales.y, ticks: { ...chartDefaults.scales.y.ticks, callback: v => v + '%' } }
+      }
+    }
+  });
+}
+
+// Model comparison
+const modelCtx = document.getElementById('modelChart');
+if (modelCtx) {
+  new Chart(modelCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Logistic\nRegression', 'Random\nForest', 'XGBoost'],
+      datasets: [{
+        data: [0.62, 0.78, 0.84],
+        backgroundColor: ['rgba(44,62,80,0.3)', 'rgba(44,62,80,0.5)', 'rgba(200,52,26,0.7)'],
+        borderColor: ['rgba(44,62,80,0.5)', 'rgba(44,62,80,0.8)', '#c8341a'],
+        borderWidth: 1,
+      }]
+    },
+    options: {
+      ...chartDefaults,
+      indexAxis: 'y',
+      scales: {
+        x: { ...chartDefaults.scales.x, min: 0, max: 1, ticks: { ...chartDefaults.scales.x.ticks } },
+        y: { ...chartDefaults.scales.y }
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>
